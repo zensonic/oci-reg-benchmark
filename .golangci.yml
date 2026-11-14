@@ -11,6 +11,18 @@ linters:
     - unconvert
     - unparam
 
+  exclusions:
+    # Ignore unchecked errors from Close on read paths and from printing to
+    # the terminal, the standard golangci-lint preset. Closes after writing a
+    # file are still checked explicitly in the code.
+    presets:
+      - std-error-handling
+    rules:
+      # A Close error in a test cannot change the outcome of the test, and
+      # test helpers close response bodies with t.Cleanup.
+      - path: _test\.go
+        linters: [errcheck, bodyclose]
+
 formatters:
   enable:
     - gofmt

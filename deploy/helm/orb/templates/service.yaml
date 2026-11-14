@@ -1,0 +1,21 @@
+# Copyright The ORB Authors
+# SPDX-License-Identifier: Apache-2.0
+#
+# The Service must be named orb-controller: agents and orbctl rely on it.
+apiVersion: v1
+kind: Service
+metadata:
+  name: orb-controller
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "orb.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "orb.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: agent-api
+      port: {{ .Values.service.agentApiPort }}
+      targetPort: agent-api
+    - name: metrics
+      port: {{ .Values.service.metricsPort }}
+      targetPort: metrics

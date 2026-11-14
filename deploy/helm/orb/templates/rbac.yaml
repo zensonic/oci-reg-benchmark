@@ -1,0 +1,57 @@
+# Copyright The ORB Authors
+# SPDX-License-Identifier: Apache-2.0
+#
+# Permissions for the ORB controller. They match the kubebuilder RBAC
+# markers in internal/controller/reconciler.go.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "orb.fullname" . }}-controller
+  labels:
+    {{- include "orb.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["orb.kubectl.dk"]
+    resources: ["orbbenchmarks"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["orb.kubectl.dk"]
+    resources: ["orbbenchmarkruns"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["orb.kubectl.dk"]
+    resources: ["orbbenchmarkruns/status"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: ["orb.kubectl.dk"]
+    resources: ["orbbenchmarkruns/finalizers"]
+    verbs: ["update"]
+  - apiGroups: ["orb.kubectl.dk"]
+    resources: ["orbbenchmarkresults"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "orb.fullname" . }}-controller
+  labels:
+    {{- include "orb.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "orb.fullname" . }}-controller
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "orb.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}

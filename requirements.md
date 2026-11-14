@@ -497,6 +497,9 @@ Decisions made during design, kept for reference.
 | 2026-11-14 | Images and Helm charts are published to GitHub Container Registry (`ghcr.io`), which is free for public packages. | BUILD-7, BUILD-8 |
 | 2026-11-14 | Licensing follows section 11 of the CNCF Charter: Apache-2.0 for code, CC BY 4.0 for documentation, DCO sign-off, CNCF third-party license allowlist. | LIC-1 to LIC-7 |
 | 2026-11-14 | SQLite driver is `github.com/mattn/go-sqlite3`. SQLite's public-domain license is not on the CNCF allowlist, but this package has CNCF license exception `exc-2019-03-11-039`, approved for all CNCF projects. It needs CGO, so the `orb` binary is built with CGO and linked statically; `orbctl` stays CGO-free. | RES-8, BUILD-7, LIC-5 |
+| 2026-11-14 | The first alpha (`v0.1.0-alpha.1`) implements every MUST requirement with the `harbor` and `generic` registry modules. The `ecr`, `acr` and `gar` modules (AUTH-3, SHOULD) come in a later release. | SCOPE-2, REG-3, AUTH-3 |
+| 2026-11-14 | Agents talk to the controller with HTTP and JSON, protected by a per-run bearer token stored in a Secret. This avoids code generation and keeps the protocol readable. The protocol is documented in `docs/architecture.md`. | ARCH-6 |
+| 2026-11-14 | A pull fetches blobs one after another, config first, as container runtimes do. Pull latency therefore ends at the first byte of the config blob. | OP-1, LAT-2 |
 
 ## 16. Open items
 

@@ -11,8 +11,25 @@ from hundreds of simultaneous simulated clients.
 
 ORB runs in Kubernetes as an operator and is controlled with the `orbctl` CLI.
 
-> **Status:** design phase. The requirements are complete; the implementation
-> has not started yet. See [requirements.md](requirements.md).
+> **Status:** alpha (`v0.1.0-alpha.1`). All MUST requirements in
+> [requirements.md](requirements.md) are implemented, with the `harbor` and
+> `generic` registry modules. Expect changes to the API before `v1`.
+
+## Quick start
+
+```sh
+helm install orb oci://ghcr.io/zensonic/oci-reg-benchmark/charts/orb \
+  --namespace orb-system --create-namespace
+
+kubectl apply -f examples/credentials-secret.yaml   # edit first
+orbctl benchmark apply -f examples/harbor-load.yaml
+orbctl registry check harbor-load
+orbctl run start harbor-load --watch
+orbctl result get <run-name>
+```
+
+See the [user guide](docs/usage.md) for everything else, and
+[docs/architecture.md](docs/architecture.md) for how ORB works inside.
 
 ## Installation
 

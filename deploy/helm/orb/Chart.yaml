@@ -1,0 +1,19 @@
+# Copyright The ORB Authors
+# SPDX-License-Identifier: Apache-2.0
+apiVersion: v2
+name: orb
+description: ORB benchmarks OCI container registries such as Harbor, from inside Kubernetes.
+type: application
+version: 0.1.0-alpha.1
+appVersion: 0.1.0-alpha.1
+home: https://github.com/zensonic/oci-reg-benchmark
+sources:
+  - https://github.com/zensonic/oci-reg-benchmark
+keywords:
+  - oci
+  - registry
+  - harbor
+  - benchmark
+  - operator
+annotations:
+  licenses: Apache-2.0

@@ -1,0 +1,540 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.23.0
+  name: orbbenchmarks.orb.kubectl.dk
+spec:
+  group: orb.kubectl.dk
+  names:
+    categories:
+    - orb
+    kind: OrbBenchmark
+    listKind: OrbBenchmarkList
+    plural: orbbenchmarks
+    shortNames:
+    - orbb
+    singular: orbbenchmark
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.registry.url
+      name: Registry
+      type: string
+    - jsonPath: .spec.registry.module
+      name: Module
+      type: string
+    - jsonPath: .spec.imageSet.type
+      name: Image set
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          OrbBenchmark is a reusable benchmark definition (RUN-1). Starting it creates
+          an OrbBenchmarkRun.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: |-
+              OrbBenchmarkSpec fully describes a benchmark, so it can be run again with
+              identical settings.
+            properties:
+              agents:
+                description: Agents controls the agent pods that run the workers.
+                properties:
+                  nodeSelector:
+                    additionalProperties:
+                      type: string
+                    description: NodeSelector for agent pods.
+                    type: object
+                  resources:
+                    description: Resources for the agent container.
+                    properties:
+                      claims:
+                        description: |-
+                          Claims lists the names of resources, defined in spec.resourceClaims,
+                          that are used by this container.
+
+                          This field depends on the
+                          DynamicResourceAllocation feature gate.
+
+                          This field is immutable. It can only be set for containers.
+                        items:
+                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                          properties:
+                            name:
+                              description: |-
+                                Name must match the name of one entry in pod.spec.resourceClaims of
+                                the Pod where this field is used. It makes that resource available
+                                inside a container.
+                              type: string
+                            request:
+                              description: |-
+                                Request is the name chosen for a request in the referenced claim.
+                                If empty, everything from the claim is made available, otherwise
+                                only the result of this request.
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        type: array
+                        x-kubernetes-list-map-keys:
+                        - name
+                        x-kubernetes-list-type: map
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: |-
+                          Limits describes the maximum amount of compute resources allowed.
+                          More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: |-
+                          Requests describes the minimum amount of compute resources required.
+                          If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
+                          otherwise to an implementation-defined value. Requests cannot exceed Limits.
+                          More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                        type: object
+                    type: object
+                  spreadAcrossNodes:
+                    default: true
+                    description: SpreadAcrossNodes spreads agents across nodes (LOAD-8).
+                    type: boolean
+                  tolerations:
+                    description: Tolerations for agent pods.
+                    items:
+                      description: |-
+                        The pod this Toleration is attached to tolerates any taint that matches
+                        the triple <key,value,effect> using the matching operator <operator>.
+                      properties:
+                        effect:
+                          description: |-
+                            Effect indicates the taint effect to match. Empty means match all taint effects.
+                            When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.
+                          type: string
+                        key:
+                          description: |-
+                            Key is the taint key that the toleration applies to. Empty means match all taint keys.
+                            If the key is empty, operator must be Exists; this combination means to match all values and all keys.
+                          type: string
+                        operator:
+                          description: |-
+                            Operator represents a key's relationship to the value.
+                            Valid operators are Exists, Equal, Lt, and Gt. Defaults to Equal.
+                            Exists is equivalent to wildcard for value, so that a pod can
+                            tolerate all taints of a particular category.
+                            Lt and Gt perform numeric comparisons (requires feature gate TaintTolerationComparisonOperators).
+                          type: string
+                        tolerationSeconds:
+                          description: |-
+                            TolerationSeconds represents the period of time the toleration (which must be
+                            of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default,
+                            it is not set, which means tolerate the taint forever (do not evict). Zero and
+                            negative values will be treated as 0 (evict immediately) by the system.
+                          format: int64
+                          type: integer
+                        value:
+                          description: |-
+                            Value is the taint value the toleration matches to.
+                            If the operator is Exists, the value should be empty, otherwise just a regular string.
+                          type: string
+                      type: object
+                    type: array
+                  workersPerAgent:
+                    default: 50
+                    description: WorkersPerAgent is the most workers one agent pod
+                      runs (LOAD-2).
+                    minimum: 1
+                    type: integer
+                type: object
+              cleanup:
+                default: Delete
+                description: Cleanup decides what happens to pushed artifacts after
+                  the run (CLEAN-1).
+                enum:
+                - Delete
+                - Keep
+                type: string
+              imageSet:
+                description: 'ImageSet is the test data: random images or a static
+                  list (section 6).'
+                properties:
+                  poolSelection:
+                    default: Random
+                    description: PoolSelection is how workers pick images from the
+                      seeded pool (IMG-11).
+                    enum:
+                    - Random
+                    - RoundRobin
+                    type: string
+                  poolSize:
+                    default: 10
+                    description: |-
+                      PoolSize is how many images are seeded for pull, HEAD, tag and
+                      deduplication operations (IMG-10). For a static set, every image is
+                      seeded and this field is ignored.
+                    minimum: 1
+                    type: integer
+                  random:
+                    description: Random configures generated images. Used when type
+                      is Random.
+                    properties:
+                      layerSize:
+                        description: LayerSize is the size of each layer.
+                        properties:
+                          distribution:
+                            default: Fixed
+                            description: |-
+                              Distribution is Fixed (always size), Uniform (between min and max) or
+                              List (a random entry from sizes).
+                            enum:
+                            - Fixed
+                            - Uniform
+                            - List
+                            type: string
+                          max:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Max is the largest layer size for the Uniform
+                              distribution.
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          min:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Min is the smallest layer size for the Uniform
+                              distribution.
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          size:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Size is the layer size for the Fixed distribution,
+                              for example 50Mi.
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          sizes:
+                            description: Sizes are the layer sizes for the List distribution.
+                            items:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            type: array
+                        type: object
+                      layers:
+                        default: 3
+                        description: Layers is the number of layers per image.
+                        minimum: 1
+                        type: integer
+                    required:
+                    - layerSize
+                    type: object
+                  static:
+                    description: Static configures the fixed image list. Used when
+                      type is Static.
+                    properties:
+                      images:
+                        description: Images are image references, preferably pinned
+                          by digest (IMG-8).
+                        items:
+                          type: string
+                        minItems: 1
+                        type: array
+                      platform:
+                        default: linux/amd64
+                        description: Platform is used when an image reference points
+                          to a multi-platform index.
+                        type: string
+                      sourceCredentialsSecret:
+                        description: |-
+                          SourceCredentialsSecret is a dockerconfigjson Secret for the registry the
+                          images are downloaded from, if it needs credentials (IMG-7).
+                        type: string
+                      storageLimit:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        default: 2Gi
+                        description: |-
+                          StorageLimit is the most local storage an agent may use for the static
+                          set (IMG-9).
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
+                      storageMedium:
+                        default: Disk
+                        description: StorageMedium is Disk (an emptyDir on the node)
+                          or Memory (a tmpfs emptyDir).
+                        enum:
+                        - Disk
+                        - Memory
+                        type: string
+                    required:
+                    - images
+                    type: object
+                  type:
+                    default: Random
+                    description: Type is Random or Static.
+                    enum:
+                    - Random
+                    - Static
+                    type: string
+                required:
+                - type
+                type: object
+              measurement:
+                description: Measurement controls how results are recorded.
+                properties:
+                  interval:
+                    default: 1s
+                    description: Interval between metric reports from agents (ARCH-6).
+                    type: string
+                  rawSamples:
+                    description: RawSamples also stores every single operation in
+                      SQLite (RES-9).
+                    type: boolean
+                type: object
+              registry:
+                description: Registry is the registry under test.
+                properties:
+                  caSecret:
+                    description: CASecret is a Secret with a "ca.crt" key holding
+                      extra CA certificates (AUTH-5).
+                    type: string
+                  credentialsSecret:
+                    description: |-
+                      CredentialsSecret is a Secret of type kubernetes.io/dockerconfigjson
+                      with credentials for the registry (AUTH-2). Leave empty for anonymous access.
+                    type: string
+                  insecureSkipVerify:
+                    description: |-
+                      InsecureSkipVerify turns off TLS certificate verification. Only for test
+                      installations (AUTH-5).
+                    type: boolean
+                  module:
+                    default: generic
+                    description: Module is the registry module with registry-specific
+                      handling (REG-6).
+                    enum:
+                    - generic
+                    - harbor
+                    type: string
+                  repositoryPrefix:
+                    description: |-
+                      RepositoryPrefix is the first part of every repository the run uses.
+                      For Harbor this is the project name, and the project must exist.
+                      Each run pushes below <repositoryPrefix>/<run name> (IMG-12).
+                    minLength: 1
+                    type: string
+                  url:
+                    description: URL of the registry, for example https://harbor.example.com.
+                    pattern: ^https?://
+                    type: string
+                required:
+                - repositoryPrefix
+                - url
+                type: object
+              scenarios:
+                description: Scenarios are the sub-benchmarks. They run one after
+                  another (TYPE-2).
+                items:
+                  description: ScenarioSpec is one sub-benchmark (TYPE-1).
+                  properties:
+                    deduplication:
+                      description: Deduplication configures a scenario of type deduplication.
+                      properties:
+                        baseline:
+                          default: true
+                          description: Baseline also pushes unique content of the
+                            same sizes, for comparison (DEDUP-7).
+                          type: boolean
+                        chunkSize:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          default: 5Mi
+                          description: ChunkSize is the size of each PATCH when data
+                            is uploaded.
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        methods:
+                          description: Methods are the push methods to measure (DEDUP-4).
+                          items:
+                            enum:
+                            - existenceCheck
+                            - crossRepoMount
+                            - reupload
+                            type: string
+                          minItems: 1
+                          type: array
+                        scope:
+                          default: SameProject
+                          description: Scope is where the existing blobs live relative
+                            to the push target.
+                          enum:
+                          - SameRepository
+                          - SameProject
+                          - DifferentProject
+                          type: string
+                        targetProject:
+                          description: |-
+                            TargetProject is the project (first repository path part) pushes go to
+                            when scope is DifferentProject. For Harbor, the project must exist.
+                          type: string
+                      required:
+                      - methods
+                      type: object
+                    load:
+                      description: Load configures a scenario of type load.
+                      properties:
+                        chunkSize:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          default: 5Mi
+                          description: ChunkSize is the size of each PATCH when pushing
+                            (OP-9).
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        mix:
+                          additionalProperties:
+                            type: integer
+                          description: |-
+                            Mix maps operation names to their share in percent. Allowed names:
+                            pull, push, headManifest, headBlob, tag, listTags, catalog.
+                            The values must add up to 100.
+                          minProperties: 1
+                          type: object
+                        pageSize:
+                          default: 100
+                          description: PageSize is the page size for tag listing and
+                            catalog (OP-11).
+                          minimum: 1
+                          type: integer
+                        verifyDigests:
+                          description: VerifyDigests checks pulled data against its
+                            digest (OP-10).
+                          type: boolean
+                      required:
+                      - mix
+                      type: object
+                    name:
+                      description: Name identifies the scenario in results. It is
+                        also used in repository names.
+                      maxLength: 40
+                      pattern: ^[a-z0-9]+([-a-z0-9]*[a-z0-9])?$
+                      type: string
+                    profile:
+                      description: 'Profile is the load profile: stages, warm-up,
+                        think time and timeouts.'
+                      properties:
+                        connectionReuse:
+                          default: PerWorker
+                          description: |-
+                            ConnectionReuse is PerWorker (keep connections and tokens) or
+                            PerOperation (a cold client for every operation) (LOAD-4).
+                          enum:
+                          - PerWorker
+                          - PerOperation
+                          type: string
+                        operationTimeout:
+                          default: 5m
+                          description: OperationTimeout is the longest a single operation
+                            may take (LOAD-7).
+                          type: string
+                        stages:
+                          description: Stages run in order. Worker counts change linearly
+                            within a stage (LOAD-1).
+                          items:
+                            description: Stage is one segment of a load profile.
+                            properties:
+                              duration:
+                                description: Duration of the stage.
+                                type: string
+                              workers:
+                                description: |-
+                                  Workers is the worker count at the end of the stage. The count changes
+                                  linearly from the previous stage's count (0 before the first stage).
+                                minimum: 0
+                                type: integer
+                            required:
+                            - duration
+                            - workers
+                            type: object
+                          minItems: 1
+                          type: array
+                        thinkTime:
+                          description: ThinkTime is a pause between operations for
+                            each worker (LOAD-6).
+                          type: string
+                        warmup:
+                          description: Warmup is a period at the start whose measurements
+                            are kept separate (LOAD-5).
+                          type: string
+                      required:
+                      - stages
+                      type: object
+                    type:
+                      description: Type is the scenario type.
+                      enum:
+                      - load
+                      - deduplication
+                      type: string
+                  required:
+                  - name
+                  - profile
+                  - type
+                  type: object
+                minItems: 1
+                type: array
+              seed:
+                default: 1
+                description: Seed makes random workloads reproducible (RUN-7).
+                format: int64
+                type: integer
+            required:
+            - imageSet
+            - registry
+            - scenarios
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources: {}

@@ -1,0 +1,44 @@
+# Measures how fast Harbor handles pushes of content it already has.
+#
+# The seeded images live in <project>/<run>/dedup/source. Pushes go to
+# another repository in the same project (scope SameProject), using all
+# three methods: HEAD-and-skip like Docker does, a cross-repository mount,
+# and a full re-upload. A baseline push of unique content with the same sizes
+# shows how much faster deduplication is.
+apiVersion: orb.kubectl.dk/v1alpha1
+kind: OrbBenchmark
+metadata:
+  name: harbor-dedup
+spec:
+  registry:
+    url: https://harbor.example.com
+    module: harbor
+    repositoryPrefix: bench
+    credentialsSecret: harbor-credentials
+  imageSet:
+    type: Random
+    random:
+      layers: 4
+      layerSize:
+        distribution: Fixed
+        size: 20Mi
+    poolSize: 10
+  scenarios:
+    - name: dedup
+      type: deduplication
+      deduplication:
+        scope: SameProject
+        methods:
+          - existenceCheck
+          - crossRepoMount
+          - reupload
+        baseline: true
+        chunkSize: 5Mi
+      profile:
+        stages:
+          - duration: 30s
+            workers: 20
+          - duration: 5m
+            workers: 20
+  cleanup: Delete
+  seed: 7

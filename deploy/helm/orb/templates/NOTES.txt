@@ -1,0 +1,14 @@
+ORB {{ .Chart.AppVersion }} is installed in namespace {{ .Release.Namespace }}.
+
+Check that the controller is running:
+
+  kubectl -n {{ .Release.Namespace }} get pods -l app.kubernetes.io/instance={{ .Release.Name }}
+
+Then define a benchmark and start it with orbctl:
+
+  orbctl benchmark apply -f benchmark.yaml
+  orbctl run start <benchmark> --watch
+
+orbctl reaches the controller through the Service "orb-controller" in
+namespace {{ .Release.Namespace }}. If you installed ORB in another namespace
+than orb-system, pass --controller-namespace={{ .Release.Namespace }}.
