@@ -234,6 +234,9 @@ func (r *RunReconciler) follow(ctx context.Context, run *orbv1.OrbBenchmarkRun) 
 	}
 
 	if snap.Phase.IsFinished() {
+		if err := r.recordCleanup(ctx, run, snap); err != nil {
+			return ctrl.Result{}, err
+		}
 		forgetRunMetrics(run.Namespace, run.Name)
 		return ctrl.Result{}, nil
 	}
@@ -357,4 +360,26 @@ func (r *RunReconciler) setFailed(ctx context.Context, run *orbv1.OrbBenchmarkRu
 	run.Status.Message = message
 	run.Status.CompletedAt = &now
 	return r.Status().Update(ctx, run)
+}
+
+// recordCleanup copies the cleanup message into the result. The result is
+// written in the Collecting phase, before cleanup runs, so the message is
+// added once cleanup has finished (CLEAN-4, RES-6).
+func (r *RunReconciler) recordCleanup(ctx context.Context, run *orbv1.OrbBenchmarkRun, snap Snapshot) error {
+	if snap.Cleanup == "" || run.Status.ResultName == "" {
+		return nil
+	}
+	var result orbv1.OrbBenchmarkResult
+	key := client.ObjectKey{Namespace: run.Namespace, Name: run.Status.ResultName}
+	if err := r.Get(ctx, key, &result); err != nil {
+		return client.IgnoreNotFound(err)
+	}
+	if result.Summary.Cleanup == snap.Cleanup {
+		return nil
+	}
+	result.Summary.Cleanup = snap.Cleanup
+	if err := r.Update(ctx, &result); err != nil {
+		return fmt.Errorf("recording cleanup in result: %w", err)
+	}
+	return nil
 }

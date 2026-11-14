@@ -6,6 +6,7 @@ package core_test
 import (
 	"context"
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -189,7 +190,10 @@ func TestClassifyError(t *testing.T) {
 }
 
 func TestParseDockerConfig(t *testing.T) {
-	data := []byte(`{"auths":{"https://harbor.example.com":{"auth":"YmVuY2g6c2VjcmV0"}}}`)
+	// The auth field is base64 of "user:password"; build it here rather than
+	// writing an encoded credential into the source.
+	auth := base64.StdEncoding.EncodeToString([]byte("bench:secret"))
+	data := []byte(`{"auths":{"https://harbor.example.com":{"auth":"` + auth + `"}}}`)
 	creds, err := core.ParseDockerConfig(data, "harbor.example.com")
 	if err != nil {
 		t.Fatal(err)
