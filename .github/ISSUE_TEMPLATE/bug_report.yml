@@ -1,0 +1,34 @@
+name: Bug report
+description: Something in ORB does not work as expected.
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: ORB version
+      description: Output of `orbctl version` and the orb image tag.
+    validations:
+      required: true
+  - type: input
+    id: registry
+    attributes:
+      label: Registry under test
+      description: For example Harbor 2.x, ECR, ACR, Artifact Registry.
+  - type: textarea
+    id: benchmark
+    attributes:
+      label: OrbBenchmark spec
+      description: The benchmark YAML, with secrets removed.
+      render: yaml
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      render: text

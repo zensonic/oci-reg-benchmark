@@ -1,0 +1,45 @@
+# Developer Certificate of Origin check (CNCF Charter section 11, LIC-2).
+# Every commit in a pull request must carry a "Signed-off-by:" line that
+# matches the commit author. Create it with "git commit -s".
+name: DCO
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  dco:
+    name: Check commit sign-off
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify every commit is signed off by its author
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          missing=0
+          for commit in $(git rev-list --no-merges "$BASE_SHA..$HEAD_SHA"); do
+            author_email=$(git log -1 --format='%ae' "$commit")
+
+            # Bot accounts such as Dependabot cannot certify the DCO.
+            if [[ "$author_email" == *"[bot]@users.noreply.github.com" ]]; then
+              echo "Skipping bot commit $commit ($author_email)"
+              continue
+            fi
+
+            author=$(git log -1 --format='%an <%ae>' "$commit")
+            if git log -1 --format='%B' "$commit" | grep -qiF "Signed-off-by: $author"; then
+              echo "OK  $commit"
+            else
+              echo "::error::Commit $commit is missing 'Signed-off-by: $author'. Use 'git commit -s'."
+              missing=1
+            fi
+          done
+          exit $missing

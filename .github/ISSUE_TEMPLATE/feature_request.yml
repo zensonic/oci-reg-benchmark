@@ -1,0 +1,19 @@
+name: Feature request
+description: Suggest a new feature, scenario type or registry module.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+  - type: input
+    id: requirements
+    attributes:
+      label: Related requirements
+      description: Requirement IDs from requirements.md that this would add or change.
