@@ -1,0 +1,17 @@
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    - bodyclose       # HTTP response bodies must be closed (important for the registry client)
+    - errorlint       # correct error wrapping and comparison
+    - gocritic
+    - misspell
+    - revive          # readable names and doc comments
+    - unconvert
+    - unparam
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
