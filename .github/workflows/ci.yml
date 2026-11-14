@@ -31,6 +31,9 @@ jobs:
       - name: Check go.mod and go.sum are tidy
         run: make tidy-check
 
+      - name: Check generated code and CRDs are up to date
+        run: make generate-check
+
       - name: Vet
         run: go vet ./...
 

@@ -1,0 +1,48 @@
+# Copyright The ORB Authors
+# SPDX-License-Identifier: Apache-2.0
+
+# Default values for the ORB chart.
+
+image:
+  # The orb image runs both the controller and the agents.
+  repository: ghcr.io/zensonic/oci-reg-benchmark/orb
+  # Defaults to the chart's appVersion.
+  tag: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+# agentImage overrides the image used for agent pods. Defaults to the
+# controller image above.
+agentImage: ""
+
+controller:
+  # Leader election makes sure only one controller is active (ARCH-8).
+  leaderElection: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAnnotations: {}
+
+# The SQLite database with detailed results lives on this volume (RES-8).
+persistence:
+  size: 10Gi
+  # Leave empty to use the cluster's default storage class.
+  storageClass: ""
+  accessMode: ReadWriteOnce
+
+service:
+  # Port for the agent API and the export endpoint.
+  agentApiPort: 8082
+  metricsPort: 8080
+
+serviceAccount:
+  create: true
+  # Defaults to the release's full name.
+  name: ""

@@ -1,0 +1,45 @@
+# A pull-heavy load test with a fixed set of real images.
+#
+# Each agent downloads the images below before measuring starts, so the
+# download does not affect the results. They are then seeded into the
+# registry under test and pulled from there. Images are pinned by digest so
+# every run uses identical data.
+apiVersion: orb.kubectl.dk/v1alpha1
+kind: OrbBenchmark
+metadata:
+  name: static-images
+spec:
+  registry:
+    url: https://harbor.example.com
+    module: harbor
+    repositoryPrefix: bench
+    credentialsSecret: harbor-credentials
+  imageSet:
+    type: Static
+    static:
+      images:
+        - docker.io/library/alpine:3.21@sha256:bc21487101ae47172509130ee1092cc273a831968d64b617776d1f69c81e42ab
+        - docker.io/library/nginx:1.27-alpine@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10
+        - docker.io/library/python:3.13-slim@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90
+      platform: linux/amd64
+      storageLimit: 2Gi
+      storageMedium: Disk
+      # sourceCredentialsSecret: dockerhub-credentials   # only if the source needs a login
+    poolSelection: RoundRobin
+  scenarios:
+    - name: pull-heavy
+      type: load
+      load:
+        mix:
+          pull: 80
+          headManifest: 15
+          push: 5
+        verifyDigests: true
+      profile:
+        warmup: 30s
+        stages:
+          - duration: 1m
+            workers: 50
+          - duration: 10m
+            workers: 50
+  cleanup: Delete

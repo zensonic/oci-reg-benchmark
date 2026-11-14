@@ -1,0 +1,49 @@
+# Copyright The ORB Authors
+# SPDX-License-Identifier: Apache-2.0
+
+# A short benchmark for the end-to-end test: every load operation and every
+# deduplication method, against the in-cluster test registry.
+apiVersion: orb.kubectl.dk/v1alpha1
+kind: OrbBenchmark
+metadata:
+  name: e2e
+  namespace: default
+spec:
+  registry:
+    url: http://registry.registry.svc:5000
+    module: generic
+    repositoryPrefix: e2e
+  imageSet:
+    type: Random
+    random:
+      layers: 2
+      layerSize:
+        distribution: Uniform
+        min: 64Ki
+        max: 512Ki
+    poolSize: 4
+  agents:
+    workersPerAgent: 3
+    resources:
+      requests: {cpu: 50m, memory: 64Mi}
+  scenarios:
+    - name: load
+      type: load
+      load:
+        mix: {pull: 30, push: 20, headManifest: 10, headBlob: 10, tag: 10, listTags: 10, catalog: 10}
+        chunkSize: 256Ki
+        pageSize: 10
+      profile:
+        warmup: 2s
+        stages:
+          - {duration: 5s, workers: 6}
+          - {duration: 10s, workers: 6}
+          - {duration: 3s, workers: 0}
+    - name: dedup
+      type: deduplication
+      deduplication:
+        scope: SameProject
+        methods: [existenceCheck, crossRepoMount, reupload]
+      profile:
+        stages:
+          - {duration: 10s, workers: 4}

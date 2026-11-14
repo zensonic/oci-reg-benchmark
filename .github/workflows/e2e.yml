@@ -1,0 +1,84 @@
+# End-to-end test (ENG-8): runs ORB in a kind cluster against an in-cluster
+# OCI registry. Builds the image, installs the Helm chart, runs a short
+# benchmark with orbctl and checks the results and the export.
+name: E2E
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  kind:
+    name: End-to-end (kind)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - uses: azure/setup-helm@2f5e7bc67f1f9972ab16657bb795f36d8f04de0e # v5.1.0
+        with:
+          version: v4.3.2
+
+      - name: Create kind cluster
+        run: |
+          go install sigs.k8s.io/kind@v0.33.0
+          kind create cluster --name orb --wait 120s
+
+      - name: Build and load the orb image
+        run: |
+          docker build -t ghcr.io/zensonic/oci-reg-benchmark/orb:e2e .
+          kind load docker-image ghcr.io/zensonic/oci-reg-benchmark/orb:e2e --name orb
+
+      - name: Build orbctl
+        run: make build
+
+      - name: Deploy the test registry
+        run: |
+          kubectl apply -f test/e2e/registry.yaml
+          kubectl -n registry rollout status deploy/registry --timeout=120s
+
+      - name: Install ORB with Helm
+        run: |
+          helm install orb deploy/helm/orb \
+            --namespace orb-system --create-namespace \
+            --set image.tag=e2e --set image.pullPolicy=Never \
+            --wait --timeout 3m
+
+      - name: Registry check
+        run: |
+          kubectl apply -f test/e2e/benchmark.yaml
+          ./bin/orbctl registry check e2e -n default
+
+      - name: Run the benchmark
+        run: |
+          run=$(./bin/orbctl run start e2e -n default -o name)
+          echo "RUN=$run" >> "$GITHUB_ENV"
+          ./bin/orbctl run watch "$run" -n default
+
+      - name: Check the results
+        run: |
+          ./bin/orbctl result get "$RUN" -n default
+          ./bin/orbctl result get "$RUN" -n default -o json > result.json
+          ./bin/orbctl result export "$RUN" -n default -o json --output export.json
+          go run ./test/e2e/check result.json export.json
+
+      - name: Show diagnostics on failure
+        if: failure()
+        run: |
+          kubectl get orbbenchmarkruns,orbbenchmarkresults,jobs,pods -A
+          kubectl -n orb-system logs deploy/orb-controller --tail=300 || true
+          kubectl -n default logs -l orb.kubectl.dk/run --tail=100 --prefix || true

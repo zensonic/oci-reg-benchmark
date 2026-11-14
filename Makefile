@@ -20,13 +20,15 @@ LDFLAGS := -s -w \
 GOLANGCI_LINT_VERSION := v2.15.0
 ADDLICENSE_VERSION    := v1.2.0
 GO_LICENSES_VERSION   := v2.0.1
+CONTROLLER_GEN_VERSION := v0.23.0
+CONTROLLER_GEN := $(GO) run sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_GEN_VERSION)
 
 # Third-party licenses allowed without an exception by the CNCF
 # allowlist license policy (see requirements.md, LIC-5).
 # Source: https://github.com/cncf/foundation/blob/main/policies-guidance/allowed-third-party-license-policy.md
 ALLOWED_LICENSES := Apache-2.0,0BSD,BSD-2-Clause,BSD-2-Clause-FreeBSD,BSD-3-Clause,MIT,MIT-0,ISC,OpenSSL,PSF-2.0,Python-2.0,Python-2.0.1,PostgreSQL,UPL-1.0,X11,Zlib
 
-.PHONY: all build test lint tidy-check license-headers license-headers-fix dependency-licenses image ci clean
+.PHONY: all build generate generate-check test lint tidy-check license-headers license-headers-fix dependency-licenses image ci clean
 
 all: build
 
@@ -36,6 +38,15 @@ all: build
 build:
 	CGO_ENABLED=1 $(GO) build -trimpath -tags sqlite_omit_load_extension -ldflags "$(LDFLAGS)" -o bin/orb ./cmd/orb
 	CGO_ENABLED=0 $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o bin/orbctl ./cmd/orbctl
+
+## generate: regenerate deepcopy code and the CRD manifests from api/v1alpha1
+generate:
+	$(CONTROLLER_GEN) object paths=./api/...
+	$(CONTROLLER_GEN) crd:allowDangerousTypes=true paths=./api/... output:crd:dir=deploy/helm/orb/crds
+
+## generate-check: fail if generated files are out of date
+generate-check: generate
+	git diff --exit-code -- api deploy/helm/orb/crds
 
 ## test: run unit tests with the race detector
 test:

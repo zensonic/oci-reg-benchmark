@@ -1,0 +1,65 @@
+# A general load test against Harbor with random, incompressible images.
+#
+# It uses all seven operations, ramps up to 100 simultaneous workers, holds
+# the load, and ramps down again. The Harbor project "bench" must exist, and
+# the Secret "harbor-credentials" must hold credentials that may push to it
+# (see credentials-secret.yaml).
+#
+#   orbctl benchmark apply -f examples/harbor-load.yaml
+#   orbctl registry check harbor-load
+#   orbctl run start harbor-load --watch
+apiVersion: orb.kubectl.dk/v1alpha1
+kind: OrbBenchmark
+metadata:
+  name: harbor-load
+spec:
+  registry:
+    url: https://harbor.example.com
+    module: harbor
+    repositoryPrefix: bench           # the Harbor project
+    credentialsSecret: harbor-credentials
+  imageSet:
+    type: Random
+    random:
+      layers: 3
+      layerSize:
+        distribution: Uniform
+        min: 5Mi
+        max: 50Mi
+    poolSize: 20                      # images seeded for pull, HEAD and tag operations
+    poolSelection: Random
+  scenarios:
+    - name: load
+      type: load
+      load:
+        mix:                          # percent; must add up to 100
+          pull: 40
+          push: 15
+          headManifest: 15
+          headBlob: 10
+          tag: 10
+          listTags: 5
+          catalog: 5                  # Harbor only allows catalog for system admins
+        chunkSize: 5Mi
+        pageSize: 100
+      profile:
+        warmup: 1m
+        stages:
+          - duration: 2m              # ramp up from 0 to 100 workers
+            workers: 100
+          - duration: 10m             # hold
+            workers: 100
+          - duration: 1m              # ramp down
+            workers: 0
+        operationTimeout: 5m
+        connectionReuse: PerWorker
+  agents:
+    workersPerAgent: 50               # 100 workers -> 2 agent pods
+    resources:
+      requests:
+        cpu: "1"
+        memory: 512Mi
+      limits:
+        memory: 1Gi
+  cleanup: Delete
+  seed: 42
