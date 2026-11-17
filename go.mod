@@ -4,7 +4,7 @@ go 1.27.0
 
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.4.0
-	github.com/go-logr/logr v1.4.3
+	github.com/go-logr/logr v1.4.4
 	github.com/mattn/go-sqlite3 v1.14.53
 	github.com/prometheus/client_golang v1.25.0
 	github.com/spf13/cobra v1.10.2
